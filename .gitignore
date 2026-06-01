@@ -1,0 +1,19 @@
+node_modules
+.next
+out
+dist
+build
+.env
+.env*.local
+!.env.example
+coverage
+*.tsbuildinfo
+.DS_Store
+prisma/dev.db
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

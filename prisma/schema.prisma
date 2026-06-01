@@ -1,0 +1,521 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  accounts          Account[]
+  sessions          Session[]
+  prompts           Prompt[]
+  promptVersions    PromptVersion[]
+  collections       PromptCollection[]
+  savedPrompts      SavedPrompt[]
+  promptTemplates   PromptTemplate[]
+  generationHistory GenerationHistory[]
+  usageAnalytics    UsageAnalytics[]
+  feedback          Feedback[]
+  tools             Tool[]
+  aiProviders       AIProvider[]
+
+  @@index([email])
+  @@index([deletedAt])
+  @@map("user")
+}
+
+model Account {
+  id                    String    @id @default(uuid()) @db.Uuid
+  accountId             String
+  providerId            String
+  userId                String    @db.Uuid
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@index([providerId])
+  @@index([deletedAt])
+  @@map("account")
+}
+
+model Session {
+  id        String    @id @default(uuid()) @db.Uuid
+  expiresAt DateTime
+  token     String    @unique
+  ipAddress String?
+  userAgent String?
+  userId    String    @db.Uuid
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([deletedAt])
+  @@map("session")
+}
+
+model Prompt {
+  id             String       @id @default(uuid()) @db.Uuid
+  title          String
+  slug           String?
+  description    String?
+  content        String
+  systemPrompt   String?
+  status         PromptStatus @default(DRAFT)
+  visibility     Visibility   @default(PRIVATE)
+  tags           String[]     @default([])
+  metadata       Json?
+  ownerId        String       @db.Uuid
+  categoryId     String?      @db.Uuid
+  toolId         String?      @db.Uuid
+  modelId        String?      @db.Uuid
+  aiProviderId   String?      @db.Uuid
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  owner             User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  category          Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tool              Tool?               @relation(fields: [toolId], references: [id], onDelete: SetNull)
+  model             Model?              @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  aiProvider        AIProvider?         @relation(fields: [aiProviderId], references: [id], onDelete: SetNull)
+  versions          PromptVersion[]
+  savedBy           SavedPrompt[]
+  collections       PromptCollection[]
+  generationHistory GenerationHistory[]
+  usageAnalytics    UsageAnalytics[]
+  feedback          Feedback[]
+
+  @@unique([ownerId, slug])
+  @@index([ownerId, status, updatedAt])
+  @@index([ownerId, visibility])
+  @@index([categoryId])
+  @@index([toolId])
+  @@index([modelId])
+  @@index([aiProviderId])
+  @@index([deletedAt])
+  @@map("prompt")
+}
+
+model PromptVersion {
+  id           String    @id @default(uuid()) @db.Uuid
+  promptId     String    @db.Uuid
+  authorId     String?   @db.Uuid
+  version      Int
+  title        String
+  content      String
+  systemPrompt String?
+  changelog    String?
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  prompt            Prompt              @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  author            User?               @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  generationHistory GenerationHistory[]
+
+  @@unique([promptId, version])
+  @@index([promptId, createdAt])
+  @@index([authorId])
+  @@index([deletedAt])
+  @@map("prompt_version")
+}
+
+model PromptCollection {
+  id          String     @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String?
+  description String?
+  visibility  Visibility @default(PRIVATE)
+  ownerId     String     @db.Uuid
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  prompts Prompt[]
+
+  @@unique([ownerId, slug])
+  @@index([ownerId, updatedAt])
+  @@index([visibility])
+  @@index([deletedAt])
+  @@map("prompt_collection")
+}
+
+model SavedPrompt {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  promptId   String    @db.Uuid
+  notes      String?
+  isFavorite Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promptId])
+  @@index([userId, createdAt])
+  @@index([userId, isFavorite])
+  @@index([promptId])
+  @@index([deletedAt])
+  @@map("saved_prompt")
+}
+
+model Tool {
+  id          String     @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String     @unique
+  description String?
+  websiteUrl  String?
+  iconUrl     String?
+  metadata    Json?
+  ownerId     String?    @db.Uuid
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+
+  owner             User?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  prompts           Prompt[]
+  promptTemplates   PromptTemplate[]
+  generationHistory GenerationHistory[]
+  usageAnalytics    UsageAnalytics[]
+  intelligence      ToolIntelligence?
+
+  @@index([ownerId])
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("tool")
+}
+
+model Model {
+  id              String       @id @default(uuid()) @db.Uuid
+  name            String
+  slug            String
+  displayName     String
+  description     String?
+  contextWindow   Int?
+  inputTokenCost  Decimal?     @db.Decimal(12, 8)
+  outputTokenCost Decimal?     @db.Decimal(12, 8)
+  capabilities    String[]     @default([])
+  isActive        Boolean      @default(true)
+  aiProviderId    String       @db.Uuid
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
+
+  aiProvider        AIProvider          @relation(fields: [aiProviderId], references: [id], onDelete: Cascade)
+  prompts           Prompt[]
+  promptTemplates   PromptTemplate[]
+  generationHistory GenerationHistory[]
+  usageAnalytics    UsageAnalytics[]
+
+  @@unique([aiProviderId, slug])
+  @@index([aiProviderId, isActive])
+  @@index([deletedAt])
+  @@map("model")
+}
+
+model PromptTemplate {
+  id             String         @id @default(uuid()) @db.Uuid
+  title          String
+  slug           String?
+  description    String?
+  template       String
+  variables      Json?
+  status         TemplateStatus @default(DRAFT)
+  visibility     Visibility     @default(PRIVATE)
+  tags           String[]       @default([])
+  ownerId        String         @db.Uuid
+  categoryId     String?        @db.Uuid
+  toolId         String?        @db.Uuid
+  modelId        String?        @db.Uuid
+  aiProviderId   String?        @db.Uuid
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  owner             User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  category          Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tool              Tool?               @relation(fields: [toolId], references: [id], onDelete: SetNull)
+  model             Model?              @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  aiProvider        AIProvider?         @relation(fields: [aiProviderId], references: [id], onDelete: SetNull)
+  generationHistory GenerationHistory[]
+  usageAnalytics    UsageAnalytics[]
+  feedback          Feedback[]
+
+  @@unique([ownerId, slug])
+  @@index([ownerId, status, updatedAt])
+  @@index([categoryId])
+  @@index([toolId])
+  @@index([modelId])
+  @@index([aiProviderId])
+  @@index([deletedAt])
+  @@map("prompt_template")
+}
+
+model Category {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String    @unique
+  description String?
+  parentId    String?   @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  parent          Category?        @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Category[]       @relation("CategoryHierarchy")
+  prompts         Prompt[]
+  promptTemplates PromptTemplate[]
+
+  @@index([parentId])
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("category")
+}
+
+model GenerationHistory {
+  id                String           @id @default(uuid()) @db.Uuid
+  userId            String           @db.Uuid
+  promptId          String?          @db.Uuid
+  promptVersionId   String?          @db.Uuid
+  promptTemplateId  String?          @db.Uuid
+  toolId            String?          @db.Uuid
+  modelId           String?          @db.Uuid
+  aiProviderId      String?          @db.Uuid
+  input             String
+  output            String?
+  status            GenerationStatus @default(PENDING)
+  errorMessage      String?
+  inputTokens       Int              @default(0)
+  outputTokens      Int              @default(0)
+  latencyMs         Int?
+  costUsd           Decimal?         @db.Decimal(12, 8)
+  metadata          Json?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt         Prompt?         @relation(fields: [promptId], references: [id], onDelete: SetNull)
+  promptVersion  PromptVersion?  @relation(fields: [promptVersionId], references: [id], onDelete: SetNull)
+  promptTemplate PromptTemplate? @relation(fields: [promptTemplateId], references: [id], onDelete: SetNull)
+  tool           Tool?           @relation(fields: [toolId], references: [id], onDelete: SetNull)
+  model          Model?          @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  aiProvider     AIProvider?     @relation(fields: [aiProviderId], references: [id], onDelete: SetNull)
+  feedback       Feedback[]
+
+  @@index([userId, createdAt])
+  @@index([promptId, createdAt])
+  @@index([promptTemplateId, createdAt])
+  @@index([modelId, createdAt])
+  @@index([aiProviderId, createdAt])
+  @@index([toolId, createdAt])
+  @@index([createdAt])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("generation_history")
+}
+
+model UsageAnalytics {
+  id               String          @id @default(uuid()) @db.Uuid
+  userId           String          @db.Uuid
+  promptId         String?         @db.Uuid
+  promptTemplateId String?         @db.Uuid
+  toolId           String?         @db.Uuid
+  modelId          String?         @db.Uuid
+  aiProviderId     String?         @db.Uuid
+  eventType        UsageEventType
+  inputTokens      Int             @default(0)
+  outputTokens     Int             @default(0)
+  requestCount     Int             @default(1)
+  costUsd          Decimal?        @db.Decimal(12, 8)
+  metadata         Json?
+  occurredAt       DateTime        @default(now())
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt         Prompt?         @relation(fields: [promptId], references: [id], onDelete: SetNull)
+  promptTemplate PromptTemplate? @relation(fields: [promptTemplateId], references: [id], onDelete: SetNull)
+  tool           Tool?           @relation(fields: [toolId], references: [id], onDelete: SetNull)
+  model          Model?          @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  aiProvider     AIProvider?     @relation(fields: [aiProviderId], references: [id], onDelete: SetNull)
+
+  @@index([userId, occurredAt])
+  @@index([eventType, occurredAt])
+  @@index([promptId, occurredAt])
+  @@index([modelId, occurredAt])
+  @@index([aiProviderId, occurredAt])
+  @@index([deletedAt])
+  @@map("usage_analytics")
+}
+
+model Feedback {
+  id                  String       @id @default(uuid()) @db.Uuid
+  userId              String       @db.Uuid
+  promptId            String?      @db.Uuid
+  promptTemplateId    String?      @db.Uuid
+  generationHistoryId String?      @db.Uuid
+  rating              Int?
+  type                FeedbackType @default(GENERAL)
+  comment             String?
+  metadata            Json?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  deletedAt           DateTime?
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt            Prompt?            @relation(fields: [promptId], references: [id], onDelete: SetNull)
+  promptTemplate    PromptTemplate?    @relation(fields: [promptTemplateId], references: [id], onDelete: SetNull)
+  generationHistory GenerationHistory? @relation(fields: [generationHistoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([promptId])
+  @@index([promptTemplateId])
+  @@index([generationHistoryId])
+  @@index([type])
+  @@index([deletedAt])
+  @@map("feedback")
+}
+
+model AIProvider {
+  id          String         @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String         @unique
+  description String?
+  websiteUrl  String?
+  apiBaseUrl  String?
+  status      ProviderStatus @default(ACTIVE)
+  metadata    Json?
+  ownerId     String?        @db.Uuid
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+
+  owner             User?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  models            Model[]
+  prompts           Prompt[]
+  promptTemplates   PromptTemplate[]
+  generationHistory GenerationHistory[]
+  usageAnalytics    UsageAnalytics[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("ai_provider")
+}
+
+model Verification {
+  id         String    @id @default(uuid()) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  @@index([identifier])
+  @@index([expiresAt])
+  @@index([deletedAt])
+  @@map("verification")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum PromptStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum TemplateStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Visibility {
+  PRIVATE
+  TEAM
+  PUBLIC
+}
+
+enum GenerationStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum UsageEventType {
+  PROMPT_CREATED
+  PROMPT_UPDATED
+  PROMPT_GENERATED
+  TEMPLATE_USED
+  MODEL_CALLED
+  FEEDBACK_SUBMITTED
+}
+
+enum FeedbackType {
+  GENERAL
+  QUALITY
+  BUG
+  FEATURE_REQUEST
+}
+
+enum ProviderStatus {
+  ACTIVE
+  INACTIVE
+  DEPRECATED
+}
+
+model ToolIntelligence {
+  id                    String   @id @default(uuid()) @db.Uuid
+  toolId                String   @unique @db.Uuid
+  promptStyle           String
+  contextWindow         Int?
+  bestPractices         String[]
+  outputStructure       String?
+  recommendedTechniques String[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  tool                  Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@map("tool_intelligence")
+}
