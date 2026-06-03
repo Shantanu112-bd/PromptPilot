@@ -19,7 +19,7 @@ export default async function LibraryPage() {
       select: { id: true, name: true }, 
       orderBy: { name: "asc" } 
     }),
-    getPromptsAction({ page: 1, limit: 20 })
+    getPromptsAction({ page: 1, limit: 20, sortBy: "createdAt", sortOrder: "desc", favoritesOnly: false })
   ]);
 
   const initialPrompts = initialPromptsResult.ok ? initialPromptsResult.data.prompts : [];

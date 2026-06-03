@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     const modelIds = modelUsage.map((m: any) => m.modelId as string);
     const models = await prisma.model.findMany({
       where: { id: { in: modelIds } },
-      select: { id: true, name: true, providerId: true }
+      select: { id: true, name: true, aiProviderId: true }
     });
 
     const modelMap = new Map(models.map((m: any) => [m.id, m]));
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       return {
         modelId: usage.modelId,
         modelName: model?.name || "Unknown Model",
-        providerId: model?.providerId || null,
+        providerId: model?.aiProviderId || null,
         generations: usage._count,
         totalTokens: (usage._sum.inputTokens || 0) + (usage._sum.outputTokens || 0),
         costUsd: usage._sum.costUsd || 0

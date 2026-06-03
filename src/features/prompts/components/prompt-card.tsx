@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { toggleFavoriteAction } from "@/features/prompts/server/toggle-favorite";
 import { deletePromptAction, duplicatePromptAction } from "@/features/prompts/server/manage-prompt";
 
@@ -29,16 +29,12 @@ export function PromptCard({
   onViewHistory, 
   onManageCollections 
 }: PromptCardProps) {
-  const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(prompt.isFavorite);
   const [isPending, setIsPending] = useState(false);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(prompt.content);
-    toast({
-      title: "Copied!",
-      description: "Prompt copied to clipboard."
-    });
+    toast.success("Prompt copied to clipboard.");
   };
 
   const handleToggleFavorite = async () => {
@@ -49,11 +45,7 @@ export function PromptCard({
     if (result.ok) {
       setIsFavorite(result.data.isFavorite);
     } else {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive"
-      });
+      toast.error(result.error || "Failed to update favorite status.");
     }
   };
 
@@ -65,10 +57,10 @@ export function PromptCard({
     setIsPending(false);
 
     if (result.ok) {
-      toast({ title: "Prompt deleted." });
+      toast.success("Prompt deleted.");
       onDeleted?.(prompt.id);
     } else {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      toast.error(result.error || "Failed to delete prompt.");
     }
   };
 
@@ -78,10 +70,10 @@ export function PromptCard({
     setIsPending(false);
 
     if (result.ok) {
-      toast({ title: "Prompt duplicated." });
+      toast.success("Prompt duplicated.");
       onDuplicated?.(result.data.id);
     } else {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      toast.error(result.error || "Failed to duplicate prompt.");
     }
   };
 

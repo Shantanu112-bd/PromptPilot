@@ -126,7 +126,7 @@ export function PromptGenerator() {
       });
 
       if (result.ok) {
-        setImprovedText(result.improvedPrompt);
+        setImprovedText(result.data.improvedPrompt);
         toast.success("Prompt optimized successfully by AI Providers!");
       } else {
         setError(result.error);

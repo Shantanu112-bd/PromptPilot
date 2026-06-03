@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { getPromptHistoryAction } from "@/features/prompts/server/get-prompt-history";
 import { Loader2 } from "lucide-react";
 
@@ -16,7 +15,6 @@ type PromptHistoryDialogProps = {
 };
 
 export function PromptHistoryDialog({ open, onOpenChange, promptId }: PromptHistoryDialogProps) {
-  const { toast } = useToast();
   const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,7 +32,7 @@ export function PromptHistoryDialog({ open, onOpenChange, promptId }: PromptHist
     if (result.ok) {
       setHistory(result.data);
     } else {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      toast.error(result.error || "Failed to load history.");
     }
   };
 
@@ -48,7 +46,7 @@ export function PromptHistoryDialog({ open, onOpenChange, promptId }: PromptHist
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 mt-4">
+        <div className="flex-1 mt-4 overflow-y-auto max-h-[60vh] pr-2">
           {isLoading ? (
             <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : history.length === 0 ? (
@@ -77,7 +75,7 @@ export function PromptHistoryDialog({ open, onOpenChange, promptId }: PromptHist
               ))}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

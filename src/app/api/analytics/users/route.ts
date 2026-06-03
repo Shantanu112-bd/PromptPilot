@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const session = await requireSession();
     
     // Admin protection
-    if (session.user.role !== "ADMIN") {
+    if ((session.user as any).role !== "ADMIN") {
       return errorResponse("Unauthorized: Admin access required", 403);
     }
 

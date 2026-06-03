@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/feedback/empty-state";
 import { BookmarkX, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 type PromptLibraryClientProps = {
   initialPrompts: any[];
@@ -20,7 +20,6 @@ type PromptLibraryClientProps = {
 };
 
 export function PromptLibraryClient({ initialPrompts, tools, categories, collections }: PromptLibraryClientProps) {
-  const { toast } = useToast();
   const [prompts, setPrompts] = useState(initialPrompts);
   const [isPending, startTransition] = useTransition();
   const [filters, setFilters] = useState<Partial<GetPromptsInput>>({});
@@ -40,10 +39,10 @@ export function PromptLibraryClient({ initialPrompts, tools, categories, collect
       if (result.ok) {
         setPrompts(result.data.prompts);
       } else {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        toast.error(result.error || "Failed to fetch prompts.");
       }
     });
-  }, [filters, toast]);
+  }, [filters]);
 
   const handleFilterChange = (newFilters: Partial<GetPromptsInput>) => {
     setFilters(newFilters);

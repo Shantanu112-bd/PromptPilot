@@ -10,7 +10,7 @@ export type ActionResponse<T> =
 
 async function verifyAdmin() {
   const session = await requireSession();
-  if (session.user.role !== "ADMIN") {
+  if ((session.user as any).role !== "ADMIN") {
     throw new Error("Unauthorized: Admin access required");
   }
 }

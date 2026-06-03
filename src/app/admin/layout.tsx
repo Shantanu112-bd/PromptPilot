@@ -9,7 +9,7 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
   const session = await requireSession();
 
   // Admin protection barrier
-  if (session.user.role !== "ADMIN") {
+  if ((session.user as any).role !== "ADMIN") {
     redirect("/dashboard");
   }
 

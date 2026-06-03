@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/db/prisma";
 import { type ToolIntelligence, type Tool } from "@prisma/client";
 
 export type ToolWithIntelligence = Tool & {
