@@ -1,5 +1,7 @@
 # 🚀 PromptForge AI
 
+**Live Demo:** [https://prompt-pilot-bjpjemx5e-code-hunter-s-projects.vercel.app/](https://prompt-pilot-bjpjemx5e-code-hunter-s-projects.vercel.app/)
+
 PromptForge AI is a production-grade prompt engineering, management, and generation platform. Designed for developers, prompt architects, and AI builders, it helps you convert raw ideas into clean prompt structures, optimize prompt instructions via an intelligent multi-provider AI model switcher, organize them into collections, and track analytical usage logs.
 
 ---
@@ -121,10 +123,10 @@ npm run test
 
 This app runs natively on Vercel with serverless databases.
 
-1. **Database Migration Build Hook:**
-   The `build` script in `package.json` is set to run `prisma migrate deploy` automatically. Vercel applies database updates seamlessly on every deploy:
+1. **Database Client Generation:**
+   The `build` script in `package.json` is set to generate the Prisma client during compilation:
    ```json
-   "build": "prisma generate && prisma migrate deploy && next build"
+   "build": "prisma generate && next build"
    ```
 
 2. **Add Environment Variables:**
