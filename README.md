@@ -1,60 +1,131 @@
-# PromptForge AI
+# 🚀 PromptForge AI
 
-PromptForge AI is a production-ready Next.js 15 application for creating, organizing, and refining reusable AI prompts.
+PromptForge AI is a production-grade prompt engineering, management, and generation platform. Designed for developers, prompt architects, and AI builders, it helps you convert raw ideas into clean prompt structures, optimize prompt instructions via an intelligent multi-provider AI model switcher, organize them into collections, and track analytical usage logs.
 
-## Stack
+---
 
-- Next.js 15 App Router
-- TypeScript
-- TailwindCSS
-- Shadcn UI
-- PostgreSQL
-- Prisma
-- Better Auth
-- Zustand
+## ✨ Features
 
-## Getting Started
+- **💡 Prompt Architect & Generator:** Converts rough ideas into optimized markdown prompts tailored for specific editors (Cursor, VS Code, etc.), target models, and framework constraints.
+- **✨ AI Prompt Improver:** Enhances prompt layouts using Google Gemini 2.0 Flash or falls back to Groq’s high-speed Llama 3.3 70B model if quotas are reached.
+- **🗺️ Project Planner:** Analyzes product briefs to instantly generate detailed technical designs, database schemas, roadmap phases, folder trees, and deployment outlines.
+- **📚 Prompt Library & Collections:** Save, duplicate, favorite, version, and tag prompts. Group them into dynamic collections for easy modular retrieval.
+- **📊 Usage Analytics Dashboard:** Monitor total generations, token consumption, cost estimates, and provider breakdown over 7d, 30d, or custom periods.
+- **🔒 Production Auth & Security:** Secure session management with Better Auth, email/password fallback, rate limiting, and owner-based permission boundaries.
 
-1. Install dependencies:
+---
 
-```sh
+## 🛠️ Tech Stack
+
+- **Framework:** Next.js 15.5+ (App Router)
+- **Styling:** TailwindCSS & Tailwind Animate (harmonious Dark Mode support)
+- **UI Components:** Shadcn UI & Radix Primitives
+- **Database:** PostgreSQL (optimised on Neon Serverless Postgres)
+- **ORM:** Prisma
+- **Auth:** Better Auth
+- **AI Providers:** Gemini API (v1beta) & Groq Cloud API
+- **State Management:** Zustand
+
+---
+
+## 📂 Architecture & Folder Layout
+
+The project follows a **Feature-Based Architecture** to keep domain logic, components, schemas, and queries co-located.
+
+```txt
+src/
+  app/                    # App Router routes, API paths, layouts, error/loading views
+  components/
+    ui/                   # Shadcn low-level design system primitives
+    layout/               # Sidebar shells, mobile menus, and headers
+    feedback/             # Empty states, page loaders, and alerts
+  features/               # Modular features containing feature-local code
+    prompts/              # Generators, improvers, history dialogs, provider rules
+    planner/              # Project planning server actions and components
+    auth/                 # Session check helpers and forms
+    analytics/            # Analytics helpers and hooks
+    admin/                # Admin panels for managing users and system templates
+  lib/
+    db/                   # Prisma client configurations
+    env/                  # Strict environment schema parsing (Zod)
+    utils/                # Formatting and rate limiting
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the project and install dependencies
+```bash
 npm install
 ```
 
-2. Create an environment file:
-
-```sh
+### 2. Configure Environment Variables
+Create a `.env` file in the root directory:
+```bash
 cp .env.example .env
 ```
 
-3. Update `DATABASE_URL`, `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL`. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to enable Google OAuth.
+Fill in the required values:
+```env
+# Database URL (recommended: Neon Postgres connection string)
+DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
 
-4. Generate Prisma client and run migrations:
+# Better Auth Configurations
+BETTER_AUTH_SECRET="your-32-character-random-secret"
+BETTER_AUTH_URL="http://localhost:3001"
+NEXT_PUBLIC_APP_URL="http://localhost:3001"
 
-```sh
-npm run db:generate
-npm run db:migrate
+# AI Provider Keys
+GEMINI_API_KEY="your-google-ai-studio-api-key"
+GROQ_API_KEY="your-groq-console-api-key"
 ```
 
-5. Start the development server:
+### 3. Generate Database Clients & Seed
+Generate the Prisma client types and apply migrations to your database:
+```bash
+# Generate types
+npm run db:generate
 
-```sh
+# Apply migrations
+npm run db:migrate
+
+# Seed database with initial categories, tools, and models
+npm run db:seed
+```
+
+### 4. Run Locally
+```bash
 npm run dev
 ```
+Open [http://localhost:3001](http://localhost:3001) in your browser.
 
-## Quality Checks
+---
 
-```sh
+## 📊 Quality Verification & Testing
+
+```bash
+# Run lint check
 npm run lint
+
+# Verify type safety
 npm run typecheck
-npm run build
+
+# Execute unit and service tests
+npm run test
 ```
 
-## Structure
+---
 
-- `src/app`: App Router routes, layouts, loading states, and error boundaries.
-- `src/components`: Reusable UI, layout, and feedback components.
-- `src/features`: Feature-owned components, server logic, schemas, stores, and types.
-- `src/lib`: Auth, database, environment, errors, and utilities.
-- `src/stores`: Global Zustand stores.
-- `prisma`: Prisma schema and migrations.
+## ☁️ Deploy to Vercel
+
+This app runs natively on Vercel with serverless databases.
+
+1. **Database Migration Build Hook:**
+   The `build` script in `package.json` is set to run `prisma migrate deploy` automatically. Vercel applies database updates seamlessly on every deploy:
+   ```json
+   "build": "prisma generate && prisma migrate deploy && next build"
+   ```
+
+2. **Add Environment Variables:**
+   Add `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`, `GEMINI_API_KEY`, and `GROQ_API_KEY` to the project variables inside the Vercel Dashboard settings.
